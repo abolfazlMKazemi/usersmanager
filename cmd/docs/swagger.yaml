@@ -1,0 +1,411 @@
+definitions:
+  delivery.ChargeCode:
+    properties:
+      amount:
+        type: number
+      charge_code_id:
+        type: integer
+      code:
+        type: string
+      current_uses:
+        type: integer
+      max_uses:
+        type: integer
+    required:
+    - amount
+    - code
+    - current_uses
+    - max_uses
+    type: object
+  delivery.ChargeCodeTransaction:
+    properties:
+      ChargeCodeID:
+        type: integer
+      phoneNumber:
+        description: TransactionID int `json:"transaction_id"`
+        type: string
+    required:
+    - ChargeCodeID
+    - phoneNumber
+    type: object
+  delivery.CreateChargeCodeMode:
+    properties:
+      amount:
+        type: number
+      code:
+        type: string
+      current_uses:
+        type: integer
+      max_uses:
+        type: integer
+    required:
+    - amount
+    - code
+    - current_uses
+    - max_uses
+    type: object
+  delivery.Transaction:
+    properties:
+      amount:
+        type: number
+      phoneNumber:
+        description: TransactionID int     `json:"transaction_id"`
+        type: string
+    required:
+    - phoneNumber
+    type: object
+  delivery.User:
+    properties:
+      Balance:
+        type: number
+      PhoneNumber:
+        type: string
+      id:
+        type: integer
+    required:
+    - PhoneNumber
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/chargeCode:
+    get:
+      description: Get all chargeCode.
+      operationId: get-all-chargeCode
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/delivery.ChargeCode'
+            type: array
+      summary: Get chargeCodes
+      tags:
+      - ChargeCode
+    post:
+      consumes:
+      - application/json
+      description: Create a new chargeCode using the provided data.
+      parameters:
+      - description: ChargeCode object to create
+        in: body
+        name: CreateChargeCodeMode
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.CreateChargeCodeMode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Create a new chargeCode
+      tags:
+      - ChargeCode
+    put:
+      consumes:
+      - application/json
+      description: Update a chargeCode using the provided data.
+      parameters:
+      - description: ChargeCode object to update
+        in: body
+        name: chargeCode
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.ChargeCode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Update a chargeCode
+      tags:
+      - ChargeCode
+  /api/v1/chargeCode/{id}:
+    delete:
+      description: Delete a chargeCode by their unique ID.
+      operationId: delete-chargeCode-by-id
+      parameters:
+      - description: chargeCode ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Delete chargeCode by ID
+      tags:
+      - ChargeCode
+    get:
+      description: Get a chargeCode by their unique ID.
+      operationId: get-chargeCode-by-id
+      parameters:
+      - description: chargeCode ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Get chargeCode by ID
+      tags:
+      - ChargeCode
+  /api/v1/chargeCode/code/{code}:
+    get:
+      description: Get a chargeCode by their unique Code.
+      operationId: get-chargeCode-by-code
+      parameters:
+      - description: chargeCode Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Get chargeCode by Code
+      tags:
+      - ChargeCode
+  /api/v1/chargeCode/user/{userId}:
+    get:
+      description: Get a user chargeCode by their unique userId.
+      operationId: get-chargeCode-by-userId
+      parameters:
+      - description: user id
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Get user chargeCodes
+      tags:
+      - ChargeCode
+  /api/v1/transaction:
+    get:
+      description: Get all transactions.
+      operationId: get-all-transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/delivery.Transaction'
+            type: array
+      summary: Get transactions
+      tags:
+      - Transaction
+    post:
+      consumes:
+      - application/json
+      description: Create a new Transaction using the provided data.
+      parameters:
+      - description: Transaction object to create
+        in: body
+        name: Transaction
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.Transaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Transaction'
+      summary: Create a new Transaction
+      tags:
+      - Transaction
+  /api/v1/transaction/{id}:
+    get:
+      description: Get a Transaction by their unique ID.
+      operationId: get-transaction-by-id
+      parameters:
+      - description: transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Transaction'
+      summary: Get Transaction by ID
+      tags:
+      - Transaction
+  /api/v1/transaction/charge:
+    post:
+      consumes:
+      - application/json
+      description: Create a new ChargeCodeTransaction using the provided data.
+      parameters:
+      - description: ChargeCodeTransaction object to create
+        in: body
+        name: ChargeCodeTransaction
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.ChargeCodeTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.ChargeCodeTransaction'
+      summary: Create a new ChargeCodeTransaction
+      tags:
+      - Transaction
+  /api/v1/transaction/user/{userId}:
+    get:
+      description: Get a Transactions by their unique user ID.
+      operationId: get-transactions-by-user-id
+      parameters:
+      - description: user ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Transaction'
+      summary: Get Transactions by user ID
+      tags:
+      - Transaction
+  /api/v1/transaction/user/totalNumber/{userId}:
+    get:
+      description: Get Total a Transaction by their unique user ID.
+      operationId: get-total-transaction-by-user-id
+      parameters:
+      - description: user ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.Transaction'
+      summary: Get Total Transaction by user ID
+      tags:
+      - Transaction
+  /api/v1/user:
+    put:
+      consumes:
+      - application/json
+      description: Update a User using the provided data.
+      parameters:
+      - description: User object to update
+        in: body
+        name: User
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.User'
+      summary: Update a User
+      tags:
+      - Users
+  /api/v1/user/{phoneNumber}:
+    get:
+      description: Get a user by their unique phoneNumber.
+      operationId: get-user-by-phoneNumber
+      parameters:
+      - description: User phoneNumber
+        in: path
+        name: phoneNumber
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delivery.User'
+      summary: Get user by phoneNumber
+      tags:
+      - Users
+  /api/v1/user/balance/{userId}:
+    get:
+      description: Get a user balance by their unique id.
+      operationId: get-user-balance-by-id
+      parameters:
+      - description: User id
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: number
+      summary: Get user balance by id
+      tags:
+      - Users
+  /api/v1/user/chargeCode/{chargeCodeId}:
+    get:
+      description: Get all List Of Users Use CargeCode.
+      operationId: get-all-Users
+      parameters:
+      - description: User chargeCode id
+        in: path
+        name: chargeCodeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/delivery.ChargeCode'
+            type: array
+      summary: Get List Of Users Use CargeCode
+      tags:
+      - Users
+swagger: "2.0"

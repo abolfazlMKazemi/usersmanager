@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: chargeCode-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: userManager  # Change this to your desired database name
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: chargeCode-phpmyadmin
+    environment:
+      PMA_HOST: mariadb  # Change this to match the MariaDB service name
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb  # Change this to match the MariaDB service name
+
+  myapp:
+    build:
+      dockerfile: Dockerfile
+    container_name: chargeCode-golang
+    environment:
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_HOST: mariadb  # Change this to match the MariaDB service name
+      MYSQL_PORT: "3306"
+      MYSQL_DB: userManager  # Change this to your desired database name
+      APPLICATION_PORT: 4238
+#      DATABASE_URL: "root:root@tcp(mariadb:3306)/"  # Change this to match the MariaDB service name
+    ports:
+      - "4238:4238"
+    depends_on:
+      - mariadb  # Change this to match the MariaDB service name
+
+volumes:
+  mariadb_data:
