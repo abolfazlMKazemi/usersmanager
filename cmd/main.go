@@ -6,14 +6,16 @@ import (
 	"chargeCode/internal/repository"
 	"chargeCode/internal/usecase"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
 	// // Load environment variables from the .env file
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatalf("Error loading .env file: %v", err)
-	// }
+	if err := godotenv.Load(); err != nil {
+		println("Error loading .env file: %v", err)
+	}
 
 	//Initial Database
 	// Initialize the database connection
