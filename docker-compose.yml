@@ -27,19 +27,28 @@ services:
   myapp:
     build:
       dockerfile: Dockerfile
-    container_name: chargeCode-golang
+    container_name: usermanager-golang
     environment:
       MYSQL_USER: root
       MYSQL_PASSWORD: root
       MYSQL_HOST: mariadb  # Change this to match the MariaDB service name
       MYSQL_PORT: "3306"
       MYSQL_DB: userManager  # Change this to your desired database name
+      MAX_CHARGE_CODE_AMOUNT: 1000000
+      MIN_CHARGE_CODE_AMOUNT: 1000000
+      MAX_TRANSACTION_AMOUNT: 2000000
+      MIN_TRANSACTION_AMOUNT: -200000
+      MAX_PAGE: 100
+      MAX_PAGE_SIZE: 30
       APPLICATION_PORT: 4238
+      MYSQL_URL: root:root@tcp(mariadb)/
 #      DATABASE_URL: "root:root@tcp(mariadb:3306)/"  # Change this to match the MariaDB service name
     ports:
       - "4238:4238"
     depends_on:
       - mariadb  # Change this to match the MariaDB service name
+    links:
+      - mariadb  
 
 volumes:
   mariadb_data:

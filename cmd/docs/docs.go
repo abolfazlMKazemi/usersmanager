@@ -18,7 +18,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/chargeCode": {
             "get": {
-                "description": "Get all chargeCode.",
+                "description": "Get charge codes with pagination.",
                 "produces": [
                     "application/json"
                 ],
@@ -26,15 +26,26 @@ const docTemplate = `{
                     "ChargeCode"
                 ],
                 "summary": "Get chargeCodes",
-                "operationId": "get-all-chargeCode",
+                "operationId": "get-paginated-chargeCodes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number most start from 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/delivery.ChargeCode"
-                            }
+                            "$ref": "#/definitions/delivery.ChargeCode"
                         }
                     }
                 }
@@ -136,14 +147,14 @@ const docTemplate = `{
         },
         "/api/v1/chargeCode/user/{userId}": {
             "get": {
-                "description": "Get a user chargeCode by their unique userId.",
+                "description": "Get a user chargeCode by their unique userId with pagination support.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ChargeCode"
                 ],
-                "summary": "Get user chargeCodes",
+                "summary": "Get user chargeCodes with pagination",
                 "operationId": "get-chargeCode-by-userId",
                 "parameters": [
                     {
@@ -152,6 +163,18 @@ const docTemplate = `{
                         "name": "userId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number most start from 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -224,23 +247,34 @@ const docTemplate = `{
         },
         "/api/v1/transaction": {
             "get": {
-                "description": "Get all transactions.",
+                "description": "Get transactions with pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Transaction"
                 ],
-                "summary": "Get transactions",
-                "operationId": "get-all-transactions",
+                "summary": "Get transactions with pagination",
+                "operationId": "get-paginated-transactions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number most start from 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/delivery.Transaction"
-                            }
+                            "$ref": "#/definitions/delivery.Transaction"
                         }
                     }
                 }
@@ -344,7 +378,7 @@ const docTemplate = `{
         },
         "/api/v1/transaction/user/{userId}": {
             "get": {
-                "description": "Get a Transactions by their unique user ID.",
+                "description": "Get transactions for a user by their unique user ID with pagination.",
                 "produces": [
                     "application/json"
                 ],
@@ -356,10 +390,22 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "user ID",
+                        "description": "User ID",
                         "name": "userId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number most start from 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "pageSize",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -468,32 +514,41 @@ const docTemplate = `{
         },
         "/api/v1/user/chargeCode/{chargeCodeId}": {
             "get": {
-                "description": "Get all List Of Users Use CargeCode.",
+                "description": "Get a list of users who use a specific ChargeCode with pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Users"
                 ],
-                "summary": "Get List Of Users Use CargeCode",
-                "operationId": "get-all-Users",
+                "summary": "Get List Of Users Use ChargeCode",
+                "operationId": "get-list-of-users-use-chargecode",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "User chargeCode id",
+                        "type": "integer",
+                        "description": "ChargeCode ID",
                         "name": "chargeCodeId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number most start from 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "pageSize",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/delivery.ChargeCode"
-                            }
+                            "$ref": "#/definitions/delivery.ChargeCode"
                         }
                     }
                 }

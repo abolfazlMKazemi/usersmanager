@@ -56,6 +56,5 @@ func SetupRouter(userUC *usecase.UserUseCase, chargeCodeUC *usecase.ChargeCodeUs
 
 	}
 
-	router.Run(":8080")
 	return router
 }

@@ -2,6 +2,7 @@ package repository
 
 // Import the errors package
 import (
+	"chargeCode/internal/config"
 	"chargeCode/internal/usecase"
 	"database/sql"
 	"errors"
@@ -10,30 +11,47 @@ import (
 
 type ChargeCodeRepository struct {
 	// Implement data storage and retrieval methods here
-	db *sql.DB
+	db     *sql.DB
+	config *config.AppConfig
 }
 
-func NewChargeCodeRepository(db *sql.DB) *ChargeCodeRepository {
+func NewChargeCodeRepository(db *sql.DB, config *config.AppConfig) *ChargeCodeRepository {
 	// Initialize the database connection
 
-	return &ChargeCodeRepository{db: db}
+	return &ChargeCodeRepository{db: db, config: config}
 }
 
-func (cu *ChargeCodeRepository) GetChargeCodes() ([]*usecase.ChargeCode, error) {
+func (cu *ChargeCodeRepository) GetChargeCodes(page int, pageSize int) ([]*usecase.ChargeCode, error) {
+
+	if page > cu.config.MaxPage {
+		return nil, errors.New("page exceeds the maximum allowed limit")
+	}
+
+	if pageSize > cu.config.MaxPageSize {
+		return nil, errors.New("page size exceeds the maximum allowed limit")
+	}
+
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
+
+	// Calculate the OFFSET based on the page number and page size
+	offset := (page - 1) * pageSize
 	// Query all transactions from the 'transaction' table
-	rows, err := cu.db.Query(`
-	SELECT charge_code_id, code, max_uses, current_uses, amount
-	FROM charge_code
-`)
+	query := `
+        SELECT charge_code_id, code, max_uses, current_uses, amount
+        FROM charge_code
+        LIMIT ? OFFSET ?
+    `
+
+	rows, err := cu.db.Query(query, pageSize, offset)
 	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		fmt.Printf("Error querying charge codes: %v", err)
+		return nil, errors.New("database query error")
 	}
+
 	defer rows.Close()
 
 	ChargeCodes := []*usecase.ChargeCode{}
@@ -47,8 +65,8 @@ func (cu *ChargeCodeRepository) GetChargeCodes() ([]*usecase.ChargeCode, error) 
 		var Amount float64
 
 		if err := rows.Scan(&ChargeCodeID, &Code, &MaxUses, &CurrentUses, &Amount); err != nil {
-			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			fmt.Printf("Error scanning charge code row: %v", err)
+			return nil, errors.New("database query error")
 		}
 
 		// Adding a new User object to the slice
@@ -77,7 +95,7 @@ func (cu *ChargeCodeRepository) GetChargeCodeByID(id int) (*usecase.ChargeCode, 
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
 	// Query all transactions from the 'transaction' table
 
@@ -101,8 +119,8 @@ func (cu *ChargeCodeRepository) GetChargeCodeByID(id int) (*usecase.ChargeCode, 
 		if err == sql.ErrNoRows {
 			return nil, errors.New("charge code not found")
 		} else {
-			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			fmt.Printf("Error querying charge code by ID: %v", err)
+			return nil, errors.New("database query error")
 		}
 	} else {
 
@@ -117,7 +135,7 @@ func (cu *ChargeCodeRepository) GetChargeCodeByCode(code string) (*usecase.Charg
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
 	// Query all transactions from the 'transaction' table
 
@@ -141,8 +159,8 @@ func (cu *ChargeCodeRepository) GetChargeCodeByCode(code string) (*usecase.Charg
 		if err == sql.ErrNoRows {
 			return nil, errors.New("charge code not found")
 		} else {
-			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			fmt.Printf("Error querying charge code by code: %v", err)
+			return nil, errors.New("database query error")
 		}
 	} else {
 
@@ -158,7 +176,15 @@ func (cu *ChargeCodeRepository) CreateChargeCode(chargeCode *usecase.ChargeCode)
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
+	}
+
+	if chargeCode.Amount > cu.config.MaxChargeCodeAmount {
+		return nil, errors.New("amount is very big")
+	}
+
+	if chargeCode.Amount < cu.config.MinChargeCodeAmount {
+		return nil, errors.New("amount is very small")
 	}
 
 	// Insert the new charge code into the 'charge_code' table
@@ -167,8 +193,8 @@ func (cu *ChargeCodeRepository) CreateChargeCode(chargeCode *usecase.ChargeCode)
 	   VALUES (?, ?, ?)
    `, chargeCode.Code, chargeCode.MaxUses, chargeCode.Amount)
 	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		fmt.Printf("Error creating charge code: %v", err)
+		return nil, errors.New("database error")
 	}
 
 	return chargeCode, nil
@@ -179,7 +205,7 @@ func (cu *ChargeCodeRepository) DeleteChargeCode(id int) error {
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return errors.New("Internal Server Error")
+		return errors.New("internal Server Error")
 	}
 	// Delete the charge code by ID from the 'charge_code' table
 	_, err := cu.db.Exec(`
@@ -187,8 +213,8 @@ func (cu *ChargeCodeRepository) DeleteChargeCode(id int) error {
    WHERE charge_code_id = ?
 `, id)
 	if err != nil {
-		fmt.Println(err)
-		return errors.New(err.Error())
+		fmt.Printf("Error deleting charge code: %v", err)
+		return errors.New("database error")
 	}
 	return nil
 }
@@ -197,7 +223,7 @@ func (cu *ChargeCodeRepository) UpdateChargeCode(chargeCode *usecase.ChargeCode)
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
 
 	// Update the charge code by ID in the 'charge_code' table
@@ -207,29 +233,43 @@ func (cu *ChargeCodeRepository) UpdateChargeCode(chargeCode *usecase.ChargeCode)
 	   WHERE charge_code_id = ?
    `, chargeCode.Code, chargeCode.MaxUses, chargeCode.Amount, chargeCode.CurrentUses, chargeCode.ChargeCodeID)
 	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		fmt.Printf("Error deleting charge code: %v", err)
+		return nil, errors.New("database error")
 	}
 
 	return chargeCode, nil
 }
 
-func (cu *ChargeCodeRepository) GetUserChargeCodes(userId int) ([]*usecase.ChargeCode, error) {
+func (cu *ChargeCodeRepository) GetUserChargeCodes(userId int, page int, pageSize int) ([]*usecase.ChargeCode, error) {
+
 	// Ensure the database connection is valid
 	if err := cu.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
-	// Query the charge codes by user ID from the 'user_charge_code' table
+	if page > cu.config.MaxPage {
+		return nil, errors.New("page exceeds the maximum allowed limit")
+	}
+
+	if pageSize > cu.config.MaxPageSize {
+		return nil, errors.New("page size exceeds the maximum allowed limit")
+	}
+
+	// Calculate the offset based on the page and pageSize
+	offset := (page - 1) * pageSize
+
+	// Query the charge codes by user ID with pagination from the 'user_charge_code' table
 	rows, err := cu.db.Query(`
         SELECT uc.charge_code_id, cc.code, cc.max_uses, cc.current_uses, cc.amount
         FROM user_charge_code uc
         INNER JOIN charge_code cc ON uc.charge_code_id = cc.charge_code_id
         WHERE uc.user_id = ?
-    `, userId)
+        LIMIT ? OFFSET ?
+    `, userId, pageSize, offset)
+
 	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		fmt.Printf("Error querying user charge codes: %v", err)
+		return nil, errors.New("database error")
 	}
 	defer rows.Close()
 
@@ -243,8 +283,8 @@ func (cu *ChargeCodeRepository) GetUserChargeCodes(userId int) ([]*usecase.Charg
 		var amount float64
 
 		if err := rows.Scan(&chargeCodeID, &code, &maxUses, &currentUses, &amount); err != nil {
-			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			fmt.Printf("Error scanning charge code row: %v", err)
+			return nil, errors.New("database error")
 		}
 
 		// Adding a new User object to the slice
@@ -255,13 +295,13 @@ func (cu *ChargeCodeRepository) GetUserChargeCodes(userId int) ([]*usecase.Charg
 	}
 
 	if err := rows.Err(); err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		fmt.Printf("Error iterating through charge code rows: %v", err)
+		return nil, errors.New("database error")
 	}
 
 	// Return the list of transactions and no error
 	if len(ChargeCodes) > 0 {
 		return ChargeCodes, nil // Success case, return charge codes and no error
 	}
-	return nil, errors.New("transaction not found")
+	return nil, errors.New("charge codes not found")
 }
