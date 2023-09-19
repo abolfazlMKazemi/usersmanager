@@ -5,32 +5,17 @@ This project is a robust system for managing bank transactions, complete with AP
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Running with Docker Compose](#running-with-docker-compose)
+- [Swagger API documentation is available by default at:](#Swagger_API_documentation_is_available_by_default_at)
 - [Why Use MySQL for Bank Transactions?](#why-use-mysql-for-bank-transactions)
+- [Prerequisites](#prerequisites)
+- [Running with Docker Compose](#running-with-docker-compose)
+
 - [Additional Considerations](#additional-considerations)
+
 
 ## Getting Started
 
-### Prerequisites
-
-- [Docker Compose](https://docs.docker.com/compose/) for containerized deployment (recommended).
-- If you prefer not to use Docker, you can manually run the application by following these steps:
-
-    1. Install and run a MySQL database.
-    2. Create a `.env` file in the `cmd` folder.
-    3. Run the application using `go run main.go`.
-
-### Running with Docker Compose
-
-In the root folder, execute the following commands to build and run the application:
-
-```shell
-docker-compose build
-docker-compose up
-
-
-Swagger API documentation is available by default at:
+##  Swagger API documentation is available by default at:
 
 http://localhost:4238/swagger/index.html
 
@@ -63,3 +48,23 @@ In summary, MySQL is a popular choice for bank transactions due to its reliabili
 ## Additional Considerations
 
 Depending on your requirements, you can also consider using Redis or other technologies in conjunction with MySQL to enhance your system's functionality.
+
+
+
+
+## Prerequisites
+
+- [Docker Compose](https://docs.docker.com/compose/) for containerized deployment (recommended).
+- If you prefer not to use Docker, you can manually run the application by following these steps:
+
+    1. Install and run a MySQL database.
+    2. Create a `.env` file in the `cmd` folder.
+    3. Run the application using `go run main.go`.
+
+## Running with Docker Compose
+
+In the root folder, execute the following commands to build and run the application:
+
+```shell
+docker-compose build
+docker-compose up
