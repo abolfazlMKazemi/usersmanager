@@ -2,6 +2,7 @@ package repository
 
 // Import the errors package
 import (
+	"chargeCode/internal/config"
 	"chargeCode/internal/usecase"
 	"database/sql"
 	"errors"
@@ -13,27 +14,36 @@ import (
 
 type TransactionRepository struct {
 	// Implement data storage and retrieval methods here
-	db *sql.DB
+	db     *sql.DB
+	config *config.AppConfig
 }
 
-func NewTransactionRepository(db *sql.DB) *TransactionRepository {
+func NewTransactionRepository(db *sql.DB, config *config.AppConfig) *TransactionRepository {
 	// Initialize the database connection
-	return &TransactionRepository{db: db}
+	return &TransactionRepository{db: db, config: config}
 }
 
 func (tr *TransactionRepository) CreateTransaction(transaction *usecase.Transaction) (*usecase.Transaction, error) {
 
-	userRepository := NewUserRepository(tr.db)
+	if !(transaction.Amount >= tr.config.MinTransactionAmount && transaction.Amount <= tr.config.MaxTransactionAmount) {
+		return nil, errors.New("amount is outside the valid range")
+	}
+
+	userRepository := NewUserRepository(tr.db, tr.config)
 	currentUser, err := userRepository.GetUserByPhoneNumber(transaction.PhoneNumber)
 	if err != nil {
 		return nil, errors.New(err.Error())
+	}
+
+	if transaction.Amount < 0 && (currentUser.Balance+transaction.Amount) < 0 {
+		return nil, errors.New("transaction failed. insufficient funds")
 	}
 
 	// Insert the new transaction into the 'transaction' table
 	_, err = tr.db.Exec("INSERT INTO transaction (user_id, amount) VALUES (?, ?)", currentUser.ID, transaction.Amount)
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("database insert error")
 	}
 
 	// If the creation is successful, return the created transaction and no error
@@ -52,7 +62,7 @@ func (tr *TransactionRepository) CreateChargeTransaction(chargeCodeTransaction *
 	// Ensure the database connection is valid
 	if err := tr.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
 
 	_, err := tr.db.Exec(`
@@ -60,10 +70,33 @@ func (tr *TransactionRepository) CreateChargeTransaction(chargeCodeTransaction *
 	VALUES (?, ?)
 `, chargeCodeTransaction.PhoneNumber, 0)
 	if err != nil {
-		if !strings.Contains(err.Error(), "Duplicate") {
-			fmt.Println(err)
-			return nil, errors.New(err.Error())
+		if strings.Contains(err.Error(), "Duplicate") {
+			return nil, errors.New("user with the same phone number already exists")
 		}
+		fmt.Println(err)
+		return nil, errors.New("database insert error")
+	}
+
+	userRepository := NewUserRepository(tr.db, tr.config)
+	currentUser, err := userRepository.GetUserByPhoneNumber(chargeCodeTransaction.PhoneNumber)
+	if err != nil {
+		fmt.Println(err)
+		return nil, errors.New(err.Error())
+	}
+
+	var userAlreadyRedeemed int
+
+	// SQL query to count the rows in user_charge_code
+	queryuserAlreadyRedeemed := "SELECT COUNT(*) FROM user_charge_code WHERE user_id = ? AND charge_code_id = ?"
+	err = tr.db.QueryRow(queryuserAlreadyRedeemed, currentUser.ID, chargeCodeTransaction.ChargeCodeID).Scan(&userAlreadyRedeemed)
+
+	if err != nil {
+		fmt.Println("Error executing queryCheckUseChargeCode:", err)
+		return nil, errors.New(err.Error())
+	}
+
+	if userAlreadyRedeemed > 0 {
+		return nil, errors.New("user has already redeemed this charge_code")
 	}
 
 	query := `
@@ -82,42 +115,47 @@ func (tr *TransactionRepository) CreateChargeTransaction(chargeCodeTransaction *
 		return nil, errors.New(err.Error())
 	}
 
-	userRepository := NewUserRepository(tr.db)
-	currentUser, err := userRepository.GetUserByPhoneNumber(chargeCodeTransaction.PhoneNumber)
-	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(err.Error())
-	}
-
 	// Call the RedeemChargeCode stored procedure
 	_, err = tr.db.Exec("CALL RedeemChargeCode(?, ?)", currentUser.ID, chargeCodeID)
 
 	if err != nil {
 		fmt.Println(err)
-
-		return nil, errors.New(err.Error())
+		return nil, errors.New("stored procedure error")
 	}
 	// If the creation is successful, return the created ChargeCodeTransaction and no error
 	return chargeCodeTransaction, nil
 }
 
-func (tr *TransactionRepository) GetTransactions() ([]*usecase.Transaction, error) {
+func (tr *TransactionRepository) GetTransactions(page int, pageSize int) ([]*usecase.Transaction, error) {
+	if page > tr.config.MaxPage {
+		return nil, errors.New("page exceeds the maximum allowed limit")
+	}
 
+	if pageSize > tr.config.MaxPageSize {
+		return nil, errors.New("page size exceeds the maximum allowed limit")
+	}
 	// Ensure the database connection is valid
 	if err := tr.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
-	// Query all transactions from the 'transaction' table
-	rows, err := tr.db.Query(`
-	SELECT t.transaction_id, u.phoneNumber, t.amount, t.timestamp
-	FROM transaction t
-	INNER JOIN user u ON t.user_id = u.user_id
-`)
+	// Calculate the OFFSET based on the page number and page size
+	offset := (page - 1) * pageSize
+
+	// Query transactions with pagination
+	query := `
+		SELECT t.transaction_id, u.phoneNumber, t.amount, t.timestamp
+		FROM transaction t
+		INNER JOIN user u ON t.user_id = u.user_id
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := tr.db.Query(query, pageSize, offset)
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("database query error")
 	}
+
 	defer rows.Close()
 
 	transactions := []*usecase.Transaction{}
@@ -131,7 +169,7 @@ func (tr *TransactionRepository) GetTransactions() ([]*usecase.Transaction, erro
 
 		if err := rows.Scan(&transactionID, &phoneNumber, &amount, &timestamp); err != nil {
 			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			return nil, errors.New("database scan error")
 		}
 
 		// Adding a new User object to the slice
@@ -149,7 +187,7 @@ func (tr *TransactionRepository) GetTransactions() ([]*usecase.Transaction, erro
 
 	if err := rows.Err(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("database rows error")
 	}
 
 	// Return the list of transactions and no error
@@ -165,7 +203,7 @@ func (tr *TransactionRepository) GetTransactionByID(id int) (*usecase.Transactio
 	// Ensure the database connection is valid
 	if err := tr.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
 	// Query all transactions from the 'transaction' table
 
@@ -187,10 +225,10 @@ func (tr *TransactionRepository) GetTransactionByID(id int) (*usecase.Transactio
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("user not found")
+			return nil, errors.New("transaction not found")
 		} else {
 			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			return nil, errors.New("database query error")
 		}
 	} else {
 		format := "2006-01-02 15:04:05"
@@ -212,24 +250,40 @@ func (tr *TransactionRepository) GetTransactionByID(id int) (*usecase.Transactio
 	}
 }
 
-func (tr *TransactionRepository) GetUserTransactionsByUserID(id int) ([]*usecase.Transaction, error) {
+func (tr *TransactionRepository) GetUserTransactionsByUserID(id int, page int, pageSize int) ([]*usecase.Transaction, error) {
+
+	if page > tr.config.MaxPage {
+		return nil, errors.New("page exceeds the maximum allowed limit")
+	}
+
+	if pageSize > tr.config.MaxPageSize {
+		return nil, errors.New("page size exceeds the maximum allowed limit")
+	}
 
 	// Ensure the database connection is valid
 	if err := tr.db.Ping(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Internal Server Error")
+		return nil, errors.New("internal Server Error")
 	}
+
+	// Calculate the OFFSET based on the page number and page size
+	offset := (page - 1) * pageSize
+
 	// Query all transactions from the 'transaction' table
-	rows, err := tr.db.Query(`
-    SELECT t.transaction_id, u.phoneNumber, t.amount, t.timestamp
-    FROM transaction t
-    INNER JOIN user u ON t.user_id = u.user_id
-    WHERE u.user_id = ?
-`, id)
+	query := `
+		SELECT t.transaction_id, u.phoneNumber, t.amount, t.timestamp
+		FROM transaction t
+		INNER JOIN user u ON t.user_id = u.user_id
+		WHERE u.user_id = ?
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := tr.db.Query(query, id, pageSize, offset)
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("database query error")
 	}
+
 	defer rows.Close()
 
 	transactions := []*usecase.Transaction{}
@@ -243,7 +297,7 @@ func (tr *TransactionRepository) GetUserTransactionsByUserID(id int) ([]*usecase
 
 		if err := rows.Scan(&transactionID, &phoneNumber, &amount, &timestamp); err != nil {
 			fmt.Println(err)
-			return nil, errors.New(err.Error())
+			return nil, errors.New("data scan error")
 		}
 
 		// Adding a new User object to the slice
@@ -261,10 +315,8 @@ func (tr *TransactionRepository) GetUserTransactionsByUserID(id int) ([]*usecase
 
 	if err := rows.Err(); err != nil {
 		fmt.Println(err)
-		return nil, errors.New(err.Error())
+		return nil, errors.New("row iteration error")
 	}
-
-	// Return the list of transactions and no error
 
 	// Return the list of transactions and no error
 	if len(transactions) > 0 {
@@ -279,7 +331,7 @@ func (tr *TransactionRepository) GetUserTotalTransaction(userId int) (int, error
 	// Ensure the database connection is valid
 	if err := tr.db.Ping(); err != nil {
 		fmt.Println(err)
-		return 0, errors.New("Internal Server Error")
+		return 0, errors.New("internal Server Error")
 	}
 
 	println(userId)
@@ -294,8 +346,8 @@ func (tr *TransactionRepository) GetUserTotalTransaction(userId int) (int, error
 
 	println(totalTransactionCount)
 	if err != nil {
-		fmt.Println(err)
-		return 0, errors.New(err.Error())
+		fmt.Printf("Error querying total transaction count: %v", err)
+		return 0, errors.New("database query error")
 	}
 	return totalTransactionCount, nil
 }

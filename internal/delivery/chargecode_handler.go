@@ -62,16 +62,29 @@ func (cH *ChargeCodeHandler) CreateChargeCode(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// GetChargeCode godoc
+// GetChargeCodes godoc
 // @Summary Get chargeCodes
-// @Description Get all chargeCode.
+// @Description Get charge codes with pagination.
 // @Tags ChargeCode
-// @ID get-all-chargeCode
+// @ID get-paginated-chargeCodes
 // @Produce json
-// @Success 200 {array} ChargeCode
+// @Param page query integer false "Page number most start from 1"
+// @Param pageSize query integer false "Number of items per page"
+// @Success 200 {object} ChargeCode
 // @Router /api/v1/chargeCode [get]
 func (cH *ChargeCodeHandler) GetChargeCodes(c *gin.Context) {
-	chargeCodes, err := cH.ChargeCodeUseCase.GetChargeCodes()
+	// Parse the page and pageSize query parameters with default values
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	chargeCodes, err := cH.ChargeCodeUseCase.GetChargeCodes(page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -167,20 +180,39 @@ func (cH *ChargeCodeHandler) UpdateChargeCode(c *gin.Context) {
 }
 
 // GetUserChargeCodes godoc
-// @Summary Get user chargeCodes
-// @Description Get a user chargeCode by their unique userId.
+// @Summary Get user chargeCodes with pagination
+// @Description Get a user chargeCode by their unique userId with pagination support.
 // @Tags ChargeCode
 // @ID get-chargeCode-by-userId
 // @Produce json
 // @Param userId path int true "user id" Example: 123
+// @Param page query int false "Page number most start from 1" Default: 1 Example: 1
+// @Param pageSize query int false "page size" Default: 10 Example: 20
 // @Success 200 {object} ChargeCode
 // @Router /api/v1/chargeCode/user/{userId} [get]
 func (cH *ChargeCodeHandler) GetUserChargeCodes(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("userId"))
-	chargeCode, err := cH.ChargeCodeUseCase.GetUserChargeCodes(userId)
+	userId, err := strconv.Atoi(c.Param("userId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+
+	// Parse the page and pageSize query parameters with default values
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+
+	chargeCodes, err := cH.ChargeCodeUseCase.GetUserChargeCodes(userId, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, chargeCode)
+	c.JSON(http.StatusOK, chargeCodes)
 }

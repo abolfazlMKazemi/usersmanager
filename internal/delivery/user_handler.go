@@ -73,14 +73,16 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// ListOfUserUsesCargeCode godoc
-// @Summary Get List Of Users Use CargeCode
-// @Description Get all List Of Users Use CargeCode.
+// ListOfUserUsesChargeCode godoc
+// @Summary Get List Of Users Use ChargeCode
+// @Description Get a list of users who use a specific ChargeCode with pagination.
 // @Tags Users
-// @ID get-all-Users
+// @ID get-list-of-users-use-chargecode
 // @Produce json
-// @Param chargeCodeId path string true "User chargeCode id" Example: 100
-// @Success 200 {array} ChargeCode
+// @Param chargeCodeId path int true "ChargeCode ID" Example: 100
+// @Param page query int false "Page number most start from 1"
+// @Param pageSize query int false "Number of items per page"
+// @Success 200 {object} ChargeCode
 // @Router /api/v1/user/chargeCode/{chargeCodeId} [get]
 func (uh *UserHandler) ListOfUsersUseChargeCode(c *gin.Context) {
 	chargeCodeID, err := strconv.Atoi(c.Param("chargeCodeId"))
@@ -88,7 +90,17 @@ func (uh *UserHandler) ListOfUsersUseChargeCode(c *gin.Context) {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
 		return
 	}
-	chargeCodes, err := uh.UserUseCase.ListOfUsersUseChargeCode(chargeCodeID)
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	chargeCodes, err := uh.UserUseCase.ListOfUsersUseChargeCode(chargeCodeID, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

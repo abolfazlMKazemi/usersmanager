@@ -70,17 +70,24 @@ info:
 paths:
   /api/v1/chargeCode:
     get:
-      description: Get all chargeCode.
-      operationId: get-all-chargeCode
+      description: Get charge codes with pagination.
+      operationId: get-paginated-chargeCodes
+      parameters:
+      - description: Page number most start from 1
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/delivery.ChargeCode'
-            type: array
+            $ref: '#/definitions/delivery.ChargeCode'
       summary: Get chargeCodes
       tags:
       - ChargeCode
@@ -187,13 +194,21 @@ paths:
       - ChargeCode
   /api/v1/chargeCode/user/{userId}:
     get:
-      description: Get a user chargeCode by their unique userId.
+      description: Get a user chargeCode by their unique userId with pagination support.
       operationId: get-chargeCode-by-userId
       parameters:
       - description: user id
         in: path
         name: userId
         required: true
+        type: integer
+      - description: Page number most start from 1
+        in: query
+        name: page
+        type: integer
+      - description: page size
+        in: query
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -202,23 +217,30 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/delivery.ChargeCode'
-      summary: Get user chargeCodes
+      summary: Get user chargeCodes with pagination
       tags:
       - ChargeCode
   /api/v1/transaction:
     get:
-      description: Get all transactions.
-      operationId: get-all-transactions
+      description: Get transactions with pagination.
+      operationId: get-paginated-transactions
+      parameters:
+      - description: Page number most start from 1
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/delivery.Transaction'
-            type: array
-      summary: Get transactions
+            $ref: '#/definitions/delivery.Transaction'
+      summary: Get transactions with pagination
       tags:
       - Transaction
     post:
@@ -286,13 +308,21 @@ paths:
       - Transaction
   /api/v1/transaction/user/{userId}:
     get:
-      description: Get a Transactions by their unique user ID.
+      description: Get transactions for a user by their unique user ID with pagination.
       operationId: get-transactions-by-user-id
       parameters:
-      - description: user ID
+      - description: User ID
         in: path
         name: userId
         required: true
+        type: integer
+      - description: Page number most start from 1
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -388,24 +418,30 @@ paths:
       - Users
   /api/v1/user/chargeCode/{chargeCodeId}:
     get:
-      description: Get all List Of Users Use CargeCode.
-      operationId: get-all-Users
+      description: Get a list of users who use a specific ChargeCode with pagination.
+      operationId: get-list-of-users-use-chargecode
       parameters:
-      - description: User chargeCode id
+      - description: ChargeCode ID
         in: path
         name: chargeCodeId
         required: true
-        type: string
+        type: integer
+      - description: Page number most start from 1
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/delivery.ChargeCode'
-            type: array
-      summary: Get List Of Users Use CargeCode
+            $ref: '#/definitions/delivery.ChargeCode'
+      summary: Get List Of Users Use ChargeCode
       tags:
       - Users
 swagger: "2.0"

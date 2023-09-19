@@ -19,9 +19,9 @@ type ChargeCodeTransaction struct {
 type TransactionRepository interface {
 	CreateTransaction(transaction *Transaction) (*Transaction, error)
 	CreateChargeTransaction(chargeCodeTransaction *ChargeCodeTransaction) (*ChargeCodeTransaction, error)
-	GetTransactions() ([]*Transaction, error)
+	GetTransactions(page int, pageSize int) ([]*Transaction, error)
 	GetTransactionByID(id int) (*Transaction, error)
-	GetUserTransactionsByUserID(userId int) ([]*Transaction, error)
+	GetUserTransactionsByUserID(userId int, page int, pageSize int) ([]*Transaction, error)
 	GetUserTotalTransaction(userId int) (int, error)
 }
 
@@ -41,16 +41,16 @@ func (tu *TransactionUseCase) CreateChargeTransaction(chargeCodeTransaction *Cha
 	return tu.TransactionRepository.CreateChargeTransaction(chargeCodeTransaction)
 }
 
-func (tu *TransactionUseCase) GetTransactions() ([]*Transaction, error) {
-	return tu.TransactionRepository.GetTransactions()
+func (tu *TransactionUseCase) GetTransactions(page int, pageSize int) ([]*Transaction, error) {
+	return tu.TransactionRepository.GetTransactions(page, pageSize)
 }
 
 func (tu *TransactionUseCase) GetTransactionByID(id int) (*Transaction, error) {
 	return tu.TransactionRepository.GetTransactionByID(id)
 }
 
-func (tu *TransactionUseCase) GetUserTransactionsByUserID(userId int) ([]*Transaction, error) {
-	return tu.TransactionRepository.GetUserTransactionsByUserID(userId)
+func (tu *TransactionUseCase) GetUserTransactionsByUserID(userId int, page int, pageSize int) ([]*Transaction, error) {
+	return tu.TransactionRepository.GetUserTransactionsByUserID(userId, page, pageSize)
 }
 
 func (tu *TransactionUseCase) GetUserTotalTransaction(userId int) (int, error) {

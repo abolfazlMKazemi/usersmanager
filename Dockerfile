@@ -9,9 +9,9 @@ COPY . .
 
 # Build the Go application
 #RUN go build -o myapp ./cmd
-RUN go build -o chargecode ./cmd
+RUN go build -o usermanager ./cmd
 # Expose the port your Go application is listening on
 EXPOSE 4238
 
 # Run the Go application
-CMD ["./chargecode"]
+CMD ["./usermanager"]

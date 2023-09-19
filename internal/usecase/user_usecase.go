@@ -10,7 +10,7 @@ type User struct {
 type UserRepository interface {
 	GetUserByPhoneNumber(phoneNumber string) (*User, error)
 	UpdateUser(user *User) (*User, error)
-	ListOfUsersUseChargeCode(chargeCodeId int) ([]*User, error)
+	ListOfUsersUseChargeCode(chargeCodeId int, page int, pageSize int) ([]*User, error)
 	GetUserBalance(userId int) (float64, error)
 }
 
@@ -30,8 +30,8 @@ func (uc *UserUseCase) UpdateUser(user *User) (*User, error) {
 	return uc.UserRepository.UpdateUser(user)
 }
 
-func (uc *UserUseCase) ListOfUsersUseChargeCode(chargeCodeId int) ([]*User, error) {
-	return uc.UserRepository.ListOfUsersUseChargeCode(chargeCodeId)
+func (uc *UserUseCase) ListOfUsersUseChargeCode(chargeCodeId int, page int, pageSize int) ([]*User, error) {
+	return uc.UserRepository.ListOfUsersUseChargeCode(chargeCodeId, page, pageSize)
 }
 
 func (uc *UserUseCase) GetUserBalance(userId int) (float64, error) {

@@ -5,18 +5,18 @@ type ChargeCode struct {
 	ChargeCodeID int     `json:"charge_code_id"`
 	Code         string  `json:"code" binding:"required"`
 	MaxUses      int     `json:"max_uses" binding:"required"`
-	CurrentUses  int     `json:"current_uses" binding:"required"`
+	CurrentUses  int     `json:"current_uses"`
 	Amount       float64 `json:"amount" binding:"required"`
 }
 
 type ChargeCodeRepository interface {
 	CreateChargeCode(chargeCode *ChargeCode) (*ChargeCode, error)
-	GetChargeCodes() ([]*ChargeCode, error)
+	GetChargeCodes(page int, pageSize int) ([]*ChargeCode, error)
 	GetChargeCodeByCode(code string) (*ChargeCode, error)
 	GetChargeCodeByID(id int) (*ChargeCode, error)
 	DeleteChargeCode(id int) error
 	UpdateChargeCode(chargeCode *ChargeCode) (*ChargeCode, error)
-	GetUserChargeCodes(userId int) ([]*ChargeCode, error)
+	GetUserChargeCodes(userId int, page int, pageSize int) ([]*ChargeCode, error)
 }
 
 type ChargeCodeUseCase struct {
@@ -27,8 +27,8 @@ func NewChargeCodeUseCase(chargeCodeRepo ChargeCodeRepository) *ChargeCodeUseCas
 	return &ChargeCodeUseCase{ChargeCodeRepository: chargeCodeRepo}
 }
 
-func (cu *ChargeCodeUseCase) GetChargeCodes() ([]*ChargeCode, error) {
-	return cu.ChargeCodeRepository.GetChargeCodes()
+func (cu *ChargeCodeUseCase) GetChargeCodes(page int, pageSize int) ([]*ChargeCode, error) {
+	return cu.ChargeCodeRepository.GetChargeCodes(page, pageSize)
 }
 
 func (cu *ChargeCodeUseCase) GetChargeCodeByCode(code string) (*ChargeCode, error) {
@@ -52,6 +52,6 @@ func (cu *ChargeCodeUseCase) UpdateChargeCode(chargeCode *ChargeCode) (*ChargeCo
 	return cu.ChargeCodeRepository.UpdateChargeCode(chargeCode)
 }
 
-func (cu *ChargeCodeUseCase) GetUserChargeCodes(userId int) ([]*ChargeCode, error) {
-	return cu.ChargeCodeRepository.GetUserChargeCodes(userId)
+func (cu *ChargeCodeUseCase) GetUserChargeCodes(userId int, page int, pageSize int) ([]*ChargeCode, error) {
+	return cu.ChargeCodeRepository.GetUserChargeCodes(userId, page, pageSize)
 }

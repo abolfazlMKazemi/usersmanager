@@ -1,24 +1,16 @@
 package database
 
 import (
+	"chargeCode/internal/config"
 	"database/sql"
-	"fmt"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver
 )
 
 // NewDBConnection initializes a new database connection and returns it.
-func NewDBConnection() (*sql.DB, error) {
-	//	db, err := sql.Open("mysql", os.Getenv("DATABASE_URL"))
-	dbUsername := os.Getenv("MYSQL_USER")
-	dbPassword := os.Getenv("MYSQL_PASSWORD")
-	dbHost := os.Getenv("MYSQL_HOST")
-	dbPort := os.Getenv("MYSQL_PORT")
-	// Construct the database URL using environment variables
-	dbURL := fmt.Sprintf("%s:%s@tcp(%s:%s)/", dbUsername, dbPassword, dbHost, dbPort)
+func NewDBConnection(config *config.AppConfig) (*sql.DB, error) {
 
-	db, err := sql.Open("mysql", dbURL)
+	db, err := sql.Open("mysql", config.MysqlUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -45,14 +37,15 @@ func NewDBConnection() (*sql.DB, error) {
 		`CREATE TABLE IF NOT EXISTS user (
 			user_id INT PRIMARY KEY AUTO_INCREMENT,
 			phoneNumber VARCHAR(20) UNIQUE, -- Add phoneNumber column
-			balance DECIMAL(10, 2) DEFAULT 0.00 -- Add balance column with default value
+			balance DECIMAL(10, 2) DEFAULT 0.00,
+			CONSTRAINT check_balance_non_negative CHECK (balance >= 0)
 		)`,
 		`CREATE TABLE IF NOT EXISTS charge_code (
             charge_code_id INT PRIMARY KEY AUTO_INCREMENT,
             code VARCHAR(255) NOT NULL UNIQUE,
             max_uses INT NOT NULL,
             current_uses INT NOT NULL DEFAULT 0,
-            amount DECIMAL(10, 2) NOT NULL
+            amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0)
             -- Add other charge code-related columns as needed
         )`,
 		`CREATE TABLE IF NOT EXISTS user_charge_code (

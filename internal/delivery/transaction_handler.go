@@ -90,15 +90,27 @@ func (tH *TransactionHandler) CreateChargeTransaction(c *gin.Context) {
 }
 
 // GetTransactions godoc
-// @Summary Get transactions
-// @Description Get all transactions.
+// @Summary Get transactions with pagination
+// @Description Get transactions with pagination.
 // @Tags Transaction
-// @ID get-all-transactions
+// @ID get-paginated-transactions
 // @Produce json
-// @Success 200 {array} Transaction
+// @Param page query integer false "Page number most start from 1"
+// @Param pageSize query integer false "Number of items per page"
+// @Success 200 {object} Transaction
 // @Router /api/v1/transaction [get]
 func (cH *TransactionHandler) GetTransactions(c *gin.Context) {
-	transactions, err := cH.TransactionUseCase.GetTransactions()
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	transactions, err := cH.TransactionUseCase.GetTransactions(page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -128,16 +140,28 @@ func (tH *TransactionHandler) GetTransactionByID(c *gin.Context) {
 
 // GetUserTransactionsByUserID godoc
 // @Summary Get Transactions by user ID
-// @Description Get a Transactions by their unique user ID.
+// @Description Get transactions for a user by their unique user ID with pagination.
 // @Tags Transaction
 // @ID get-transactions-by-user-id
 // @Produce json
-// @Param userId path int true "user ID" Example: 123
+// @Param userId path int true "User ID" Example: 123
+// @Param page query int false "Page number most start from 1"
+// @Param pageSize query int false "Number of items per page"
 // @Success 200 {object} Transaction
 // @Router /api/v1/transaction/user/{userId} [get]
 func (tH *TransactionHandler) GetUserTransactionsByUserID(c *gin.Context) {
 	userID, _ := strconv.Atoi(c.Param("userId"))
-	transactions, err := tH.TransactionUseCase.GetUserTransactionsByUserID(userID)
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "parsing error"})
+		return
+	}
+	transactions, err := tH.TransactionUseCase.GetUserTransactionsByUserID(userID, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
